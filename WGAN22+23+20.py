@@ -1,26 +1,21 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
+#
 
 
 from __future__ import division
 
-
+# SETTING CORE LIMITS FOR NUMPY AND PANDAS BEFORE IMPORTING THEM
 import os
-num_cores_str="25"
+num_cores_str="20"
 os.environ["OMP_NUM_THREADS"] = num_cores_str
 os.environ["OPENBLAS_NUM_THREADS"] =num_cores_str
 os.environ["MKL_NUM_THREADS"] = num_cores_str
 os.environ["VECLIB_MAXIMUM_THREADS"] =num_cores_str 
 os.environ["NUMEXPR_NUM_THREADS"] = num_cores_str
 
-
+# SETTING GPU/CPU AND CORE LIMIT FOR TENSORFLOW
 import tensorflow as tf
-print("Physical Devices:")
-print(tf.config.list_physical_devices())
-device='gpu'
 
+device='gpu'
 if device =='cpu':
     tf.config.set_visible_devices([], 'GPU')
 
@@ -28,13 +23,14 @@ gpus = tf.config.get_visible_devices('GPU')
 
 if gpus:
     print(f"GPUs available: {gpus}")
+    print('Running on GPU')
 else:
     print("No GPU found. Running on CPU.")
-    num_cores=25
+    num_cores=20
     tf.config.threading.set_inter_op_parallelism_threads(num_cores)
     tf.config.threading.set_intra_op_parallelism_threads(num_cores)
 
-
+# IMPORTING RELEVANT LIBRARIES
 import time
 import math
 import numpy as np
@@ -58,47 +54,44 @@ from tensorflow.keras.layers import GroupNormalization
 from tensorflow.keras.layers import LayerNormalization
 from tensorflow.keras.layers import ReLU
 from tensorflow.keras.layers import LeakyReLU
-# # Hyper parameters
-
 rng = np.random.default_rng()
+
+# SETTING COLOR SCALE : if a pixel doesnt have a hit it will be black, this way we can distinguish between low no of hits and zero hits
 cmap = plt.cm.viridis.copy()
 cmap.set_under('black')  
-# In[2]:
+plt.figure(figsize=(6,6))
 
-
+# SETTING HYPERPARAMETERS
 MODEL_NAME = 'WCGAN'
-
 features=2
-
 sigma, decay = 1e-2, 0.9998 
 BATCH_SIZE = 128*128*4
 NOISE_DIM = 100
-LAMBDA = 5e-4 # For gradient penalty
-
-EPOCHs = 30
-CURRENT_EPOCH = 1 # Epoch start from
-SAVE_EVERY_N_EPOCH = 5 # Save checkpoint at every n epoch
+LAMBDA = 1e-4
+EPOCHs = 60
+CURRENT_EPOCH = 1 
+SAVE_EVERY_N_EPOCH = 5 
 add_losses=False
-N_CRITIC = 3 # Train critic(discriminator) n times then train generator 1 time.
-
-
+N_CRITIC = 3
 count=0
 warmup_steps=1000
- 
-
-
 learning_rate_generator = 1e-05
 learning_rate_discriminator = 1e-05
 
 
+# QUANTILE TRANSFORMATION FOR X,Y,E AND T
+qtx = QuantileTransformer(output_distribution='normal', n_quantiles=100000,subsample=2000000)
+qty = QuantileTransformer(output_distribution='normal', n_quantiles=100000,subsample=2000000)
+qte = QuantileTransformer(output_distribution='normal', n_quantiles=100000,subsample=2000000)
+qtt = QuantileTransformer(output_distribution='normal', n_quantiles=100000,subsample=2000000)
 
-qtx = QuantileTransformer(output_distribution='normal', n_quantiles=100000,subsample=100000)
-qty = QuantileTransformer(output_distribution='normal', n_quantiles=100000,subsample=100000)
-qte = QuantileTransformer(output_distribution='normal', n_quantiles=100000,subsample=100000)
-qtt = QuantileTransformer(output_distribution='normal', n_quantiles=100000,subsample=100000)
-# In[4]:
-plt.figure(figsize=(6,6))
 
+
+
+
+
+
+# LOADING TRAINING DATA
 def load_real_samples():
     X=np.load('/home/ubuntu/Abhikamya/noise_removal/small_input_100000.npy')
     rng.shuffle(X, axis=0)
@@ -132,13 +125,25 @@ def load_real_samples():
     # print('training data shape',np.shape(X))
     return X,maxx,maxy,minx,miny
 
-
 train_data_bt,maxx,maxy,minx,miny = load_real_samples()
 print('Total Number of Particles in dataset :',len(train_data_bt))
 
-n_batches=int(len(train_data_bt)/BATCH_SIZE)
 
+
+
+
+# NO OF BATCHES IN ONE EPOCH
+n_batches=int(len(train_data_bt)/BATCH_SIZE)
 print('Total Number of batches per epoch :', n_batches)
+
+
+
+# TRANSFORMATION AND INVERSE TRANSFORMATION FUNCTIONS : 
+# x: linear transformation --> quantile transformation to normal distribution 
+# y: linear transformation --> quantile transformation to normal distribution 
+# energy: log --> linear transformation --> quantile transformation to normal distribution 
+# time: log --> linear transformation --> quantile transformation to normal distribution 
+
 def transformation(Y):
     X=Y.copy()
     X[:,0] = (X[:,0] - minx)/(maxx-minx)
@@ -149,7 +154,6 @@ def transformation(Y):
     # X[:,3] = qtt.fit_transform(np.log(X[:,3].reshape(-1,1))).reshape(np.shape(X)[0])
     X=convert_to_tensor(X)
     X = X.astype('float32')
-   
     return X
 
 def inverse_transformation(X):
@@ -161,22 +165,27 @@ def inverse_transformation(X):
     return X
 
 
+
+
 sampleset_real=train_data_bt[0:200,:]
-# print("real1",sampleset_real)
+
 train_data_at=transformation(train_data_bt)
-# print(train_data_at)
-# print("real2",sampleset_real)
-# diff=train_data_at-train_data_bt
-# print("differece",np.sum(diff))
+
 sampleset_inversed=inverse_transformation(train_data_at.numpy()[0:200,:])
 
-# print(sampleset_inversed)
 
 diff=sampleset_real-sampleset_inversed
 
 print("/difference between real and inversed",np.sum(diff**2))
 
 
+
+
+
+
+
+
+# KL DIVERGENCE CALCULATION
 
 def get_kld(real: np.ndarray,
             fake: np.ndarray,
@@ -270,10 +279,12 @@ def get_kld(real: np.ndarray,
 
 # print("kl divergence for before and after transformation", f"{kl_bt_and_at:.20f}")
 
+
+# SLICING BASED ON BATCH SIZE
 train_data_sliced=tf.data.Dataset.from_tensor_slices(train_data_at).batch(BATCH_SIZE,drop_remainder=True)
 
-# #train_data=tf.data.Dataset.load_real_samples().shuffle(1000).batch(BATCH_SIZE)
 
+# SAVING A SAMPLE PLOT OF ONE BATCH
 def save_plot2(X):
     plt.figure(figsize=(6,6))
     X=X.numpy()
@@ -298,69 +309,76 @@ save_plot2(sample_image)
 
 
 # # In[7]:
-                                                                    #GENERATOR LAYERS : 6
+                                              #GENERATOR LAYERS : 7, 512-->1024-->512, 1024 neurons per layer
 
-# # You could also try layer normalization instead of batch normalization
 
 def CGAN_generator(input_z_shape=NOISE_DIM):
     '''
         DCGAN like generator architecture
     '''
     input_z_layer = Input(shape=(input_z_shape,))
-
+#1
     x = Dense(512, use_bias=False)(input_z_layer)
     x = BatchNormalization(scale=True,center=True)(x)
     x = ReLU()(x)
-
-    x = Dense(1024, use_bias=False)(x)
-    x = BatchNormalization(scale=True,center=True)(x)
-    x = ReLU()(x)
-
-    x = Dense(1024, use_bias=False)(x)
-    x = BatchNormalization(scale=True,center=True)(x)
-    x = ReLU()(x)
-
-    x = Dense(1024, use_bias=False)(x)
-    x = BatchNormalization(scale=True,center=True)(x)
-    x = ReLU()(x)
-
+#2
     x = Dense(512, use_bias=False)(x)
     x = BatchNormalization(scale=True,center=True)(x)
     x = ReLU()(x)
-
+#3
+    x = Dense(1024, use_bias=False)(x)
+    x = BatchNormalization(scale=True,center=True)(x)
+    x = ReLU()(x)
+#4
+    x = Dense(1024, use_bias=False)(x)
+    x = BatchNormalization(scale=True,center=True)(x)
+    x = ReLU()(x)
+#5
+    x = Dense(1024, use_bias=False)(x)
+    x = BatchNormalization(scale=True,center=True)(x)
+    x = ReLU()(x)
+#6
+    x = Dense(512, use_bias=False)(x)
+    x = BatchNormalization(scale=True,center=True)(x)
+    x = ReLU()(x)
+#7
     output = Dense(features, use_bias=True)(x)
  
 
     model = Model(inputs=input_z_layer, outputs=output)
     return model
 
-                                                                    #DISCRIMINATOR LAYERS : 6
+                                                     #DISCRIMINATOR LAYERS : 7 512 neurons per layer
 def CGAN_discriminator(input_x_shape=(features,)):
     '''
         DCGAN like discriminator architecture
     '''
     input_x_layer = Input(shape=input_x_shape)
-
+#1
     x = Dense(512, use_bias=True)(input_x_layer)
     x = LayerNormalization()(x)
     x = LeakyReLU(0.2)(x)
-
+#2
     x = Dense(512, use_bias=True)(x)
     x = LayerNormalization()(x)
     x = LeakyReLU(0.2)(x)
-
+#3
     x = Dense(512, use_bias=True)(x)
     x = LayerNormalization()(x)
     x = LeakyReLU(0.2)(x)
-
+#4
     x = Dense(512, use_bias=True)(x)
     x = LayerNormalization()(x)
     x = LeakyReLU(0.2)(x)
-
+#5
     x = Dense(512, use_bias=True)(x)
     x = LayerNormalization()(x)
     x = LeakyReLU(0.2)(x)
-
+#6
+    x = Dense(512, use_bias=True)(x)
+    x = LayerNormalization()(x)
+    x = LeakyReLU(0.2)(x)
+#7
     output = Dense(1, use_bias=False)(x)
 
 
@@ -390,9 +408,9 @@ discriminator.summary()
 
 
 # # Optimizers 
-D_optimizer = Adam(learning_rate=1e-05,     beta_1=0.5,
+D_optimizer = Adam(learning_rate=1e-05,     beta_1=0,
     beta_2=0.9)
-G_optimizer = Adam(learning_rate=1e-05,     beta_1=0.5,
+G_optimizer = Adam(learning_rate=1e-05,     beta_1=0,
     beta_2=0.9)
 
 
@@ -468,6 +486,9 @@ def learning_rate(lr,step):
     step=min(step,warmup_steps)
     factor=0.5*(1-np.cos(step/warmup_steps*np.pi))
     return lr*factor
+
+
+
 @tf.function
 def WGAN_GP_train_d_step(real_image,sigma, batch_size=BATCH_SIZE):
     '''

@@ -1,5 +1,5 @@
 #
-
+# convolution layes increased to 7, neuron number base back to 1024, lambda decreased to 10^-4 and beta1=0
 
 from __future__ import division
 

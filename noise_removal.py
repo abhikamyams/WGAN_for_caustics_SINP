@@ -1,4 +1,11 @@
 
+
+
+# This code only works when you want to remove noise from particles in order 10e+7, if you go upto 10e+8 it will hit a memory limit. You can fix this by having it right directly 
+# into zarr files instead of storing the numpy file in ram before saving. I tried this and there was an error where the expected number of particles were not found in the noise or signal file. 
+# since we only need to work with 10e+7 particles anyways (partly for computational speed, partly for limiting memory usage), I didnt look into debugging that. Im sure with dask there will be more 
+# efficient ways to execute this.
+
 import os
 num_cores_str="25"
 os.environ["OMP_NUM_THREADS"] = num_cores_str
@@ -29,161 +36,161 @@ cmap.set_under('black')
 # hepconvert.root_to_parquet('/home/ubuntu/Abhikamya/Original_root_files/10M_N_Caustics_1p5_x.root','/home/ubuntu/Abhikamya/Original_root_files/10M_N_Caustics_1p5_x.parquet',tree="Per_event_data", keep_branches=["Final_positionX","Final_positionY","Final_time"])
 
 
-# train_data=dd.read_parquet('/home/ubuntu/Abhikamya/Original_root_files/Without_downconversion.parquet', 
-# columns=["Final_positionX", "Final_positionY", "Final_time"])
+train_data=dd.read_parquet('/home/ubuntu/Abhikamya/Original_root_files/10M_N_Caustics_1p5_x.parquet', 
+columns=["Final_positionX", "Final_positionY", "Final_time"])
 
-# print('Number of particles before noise removal : ',len(train_data))
+print('Number of particles before noise removal : ',len(train_data))
 
-# print('no of partitions in dataset', train_data.npartitions)
+print('no of partitions in dataset', train_data.npartitions)
 
-# plt.figure(figsize=(10,10))
-# X= train_data['Final_positionX'].to_dask_array()
-# Y= train_data['Final_positionY'].to_dask_array()
-# T= train_data['Final_time'].to_dask_array()
+plt.figure(figsize=(10,10))
+X= train_data['Final_positionX'].to_dask_array()
+Y= train_data['Final_positionY'].to_dask_array()
+T= train_data['Final_time'].to_dask_array()
 
-# xmax=np.max(train_data['Final_positionX']).compute()
-# xmin=np.min(train_data['Final_positionX']).compute()
+xmax=np.max(train_data['Final_positionX']).compute()
+xmin=np.min(train_data['Final_positionX']).compute()
 
-# ymax=np.max(train_data['Final_positionY']).compute()
-# ymin=np.min(train_data['Final_positionY']).compute()
+ymax=np.max(train_data['Final_positionY']).compute()
+ymin=np.min(train_data['Final_positionY']).compute()
 
-# tmax=np.max(train_data['Final_time']).compute()
-# tmin=np.min(train_data['Final_time']).compute()
-
-
-# xbins=np.linspace(xmin,xmax,101)
-# ybins=np.linspace(ymin,ymax,101)
+tmax=np.max(train_data['Final_time']).compute()
+tmin=np.min(train_data['Final_time']).compute()
 
 
-# # histx,_ = da.histogram(X,range=(-0.02,0.02),bins=100)
+xbins=np.linspace(xmin,xmax,101)
+ybins=np.linspace(ymin,ymax,101)
 
-# # plt.figure(figsize=(6,6))
-# # plt.stairs(histx,xbins)
-# # plt.title('x for X =1.5 Initial Position')
-# # plt.savefig('fullset_x-1p5.png')
-# # plt.close()
 
-# # print('x plot done')
+# histx,_ = da.histogram(X,range=(-0.02,0.02),bins=100)
 
-# # histy,_ = da.histogram(Y,range=(-0.02,0.02),bins=100)
+# plt.figure(figsize=(6,6))
+# plt.stairs(histx,xbins)
+# plt.title('x for X =1.5 Initial Position')
+# plt.savefig('fullset_x-1p5.png')
+# plt.close()
 
-# # plt.figure(figsize=(6,6))
-# # plt.stairs(histy,ybins)
-# # plt.title('y for X =1.5 Initial Position')
-# # plt.savefig('y-1p5.png')
-# # plt.close()
+# print('x plot done')
 
-# # print('y plot done')
-# xmin=-0.02
-# xmax=0.02
-# ymin=-0.02
-# ymax=0.02
+# histy,_ = da.histogram(Y,range=(-0.02,0.02),bins=100)
 
-# def save_plot():
-#     plt.figure(figsize=(25,10))
+# plt.figure(figsize=(6,6))
+# plt.stairs(histy,ybins)
+# plt.title('y for X =1.5 Initial Position')
+# plt.savefig('y-1p5.png')
+# plt.close()
+
+# print('y plot done')
+xmin=-0.02
+xmax=0.02
+ymin=-0.02
+ymax=0.02
+
+def save_plot():
+    plt.figure(figsize=(25,10))
     
 
-#     plt.subplot(2,3,1,title='xy',xlabel='x in m', ylabel='y in m')
-#     hist,_=da.histogramdd((X,Y),bins=100,range=((-0.02,0.02),(-0.02,0.02)),)
-#     plt.imshow(hist.T, origin='lower',extent=[xmin, xmax, ymin, ymax])
-#     cbar1 = plt.colorbar()
-#     cbar1.set_label('Counts in each pixel', labelpad=15, fontsize=11)
+    plt.subplot(2,3,1,title='xy',xlabel='x in m', ylabel='y in m')
+    hist,_=da.histogramdd((X,Y),bins=100,range=((-0.02,0.02),(-0.02,0.02)),)
+    plt.imshow(hist.T, origin='lower',extent=[xmin, xmax, ymin, ymax])
+    cbar1 = plt.colorbar()
+    cbar1.set_label('Counts in each pixel', labelpad=15, fontsize=11)
 
-#     plt.subplot(2,3,2,title='xt full',xlabel='x in m', ylabel='t in ns')
-#     hist,_=da.histogramdd((X,T),bins=100,range=((-0.02,0.02),(tmin,tmax)))
-#     plt.imshow(hist.T, origin='lower',extent=[xmin, xmax, tmin, tmax],cmap=cmap,vmin=0.1,aspect='auto')
-#     cbar2 = plt.colorbar()
-#     cbar2.set_label('Counts in each pixel', labelpad=15, fontsize=11)
+    plt.subplot(2,3,2,title='xt full',xlabel='x in m', ylabel='t in ns')
+    hist,_=da.histogramdd((X,T),bins=100,range=((-0.02,0.02),(tmin,tmax)))
+    plt.imshow(hist.T, origin='lower',extent=[xmin, xmax, tmin, tmax],cmap=cmap,vmin=0.1,aspect='auto')
+    cbar2 = plt.colorbar()
+    cbar2.set_label('Counts in each pixel', labelpad=15, fontsize=11)
 
-#     plt.subplot(2,3,3,title='xt zoom',xlabel='x in m', ylabel='t in ns')
-#     hist,_=da.histogramdd((X,T),bins=100,range=((-0.02,0.02),(0,5e+4)))
-#     plt.imshow(hist.T, origin='lower',extent=[xmin, xmax, 0,5e+4],cmap=cmap,vmin=0.1,aspect='auto')
-#     cbar2 = plt.colorbar()
-#     cbar2.set_label('Counts in each pixel', labelpad=15, fontsize=11)
-
-
-#     plt.subplot(2,3,4,title='yt full',xlabel='y in m', ylabel='t in ns')
-#     hist,_=da.histogramdd((Y,T),bins=100,range=((-0.02,0.02),(tmin,tmax)))
-#     plt.imshow(hist.T, origin='lower',extent=[xmin, xmax, tmin, tmax],cmap=cmap,vmin=0.1,aspect='auto')
-#     cbar3 = plt.colorbar()
-#     cbar3.set_label('Counts in each pixel', labelpad=15, fontsize=11)
-
-#     plt.subplot(2,3,5,title='yt zoomed',xlabel='y in m', ylabel='t in ns')
-#     hist,_=da.histogramdd((Y,T),bins=100,range=((-0.02,0.02),(0,5e+4)))
-#     plt.imshow(hist.T, origin='lower',extent=[xmin, xmax, 0,5e+4],cmap=cmap,vmin=0.1,aspect='auto')
-#     cbar3 = plt.colorbar()
-#     cbar3.set_label('Counts in each pixel', labelpad=15, fontsize=11)
-#     plt.suptitle('Full set for Initial Position X = 0')
-
-#     # plt.subplots_adjust(left=0.15, bottom=0.15, right=0.82, top=0.85)
-#     filename = 'fullset_0.png'
-#     plt.savefig(filename)
-#     plt.close()
-
-# save_plot()
-# start = time.perf_counter()
+    plt.subplot(2,3,3,title='xt zoom',xlabel='x in m', ylabel='t in ns')
+    hist,_=da.histogramdd((X,T),bins=100,range=((-0.02,0.02),(0,5e+4)))
+    plt.imshow(hist.T, origin='lower',extent=[xmin, xmax, 0,5e+4],cmap=cmap,vmin=0.1,aspect='auto')
+    cbar2 = plt.colorbar()
+    cbar2.set_label('Counts in each pixel', labelpad=15, fontsize=11)
 
 
+    plt.subplot(2,3,4,title='yt full',xlabel='y in m', ylabel='t in ns')
+    hist,_=da.histogramdd((Y,T),bins=100,range=((-0.02,0.02),(tmin,tmax)))
+    plt.imshow(hist.T, origin='lower',extent=[xmin, xmax, tmin, tmax],cmap=cmap,vmin=0.1,aspect='auto')
+    cbar3 = plt.colorbar()
+    cbar3.set_label('Counts in each pixel', labelpad=15, fontsize=11)
 
-# train_data['xbins']= train_data["Final_positionX"].map_partitions(pd.cut,xbins)
-# train_data['ybins']= train_data["Final_positionY"].map_partitions(pd.cut,xbins)
-# bins = train_data['xbins'].cat.categories
-# # print(len(bins))
+    plt.subplot(2,3,5,title='yt zoomed',xlabel='y in m', ylabel='t in ns')
+    hist,_=da.histogramdd((Y,T),bins=100,range=((-0.02,0.02),(0,5e+4)))
+    plt.imshow(hist.T, origin='lower',extent=[xmin, xmax, 0,5e+4],cmap=cmap,vmin=0.1,aspect='auto')
+    cbar3 = plt.colorbar()
+    cbar3.set_label('Counts in each pixel', labelpad=15, fontsize=11)
+    plt.suptitle('Full set for Initial Position X = 1.5')
 
-# clean = []
-# noise = []
-# remove= 10000
-# i=0
-# j=0
-# # k=0
-# # bins=[]
-# # bins_after=[]
-# def d(x):
-#     global j
-#     global i
-#     # global k
-#     # global bins
-#     # global bins_after
-#     index=x.index
-#     # bins.append(len(x))
+    # plt.subplots_adjust(left=0.15, bottom=0.15, right=0.82, top=0.85)
+    filename = 'fullset_1p5.png'
+    plt.savefig(filename)
+    plt.close()
 
-#     if len(index)>remove:
-#         # np.concatenate((clean,x.iloc[remove:].to_numpy()))
-#         # np.concatenate((noise,x.iloc[:remove].to_numpy()))
+save_plot()
+start = time.perf_counter()
+
+
+
+train_data['xbins']= train_data["Final_positionX"].map_partitions(pd.cut,xbins)
+train_data['ybins']= train_data["Final_positionY"].map_partitions(pd.cut,xbins)
+bins = train_data['xbins'].cat.categories
+# print(len(bins))
+
+clean = []
+noise = []
+remove= 10000
+i=0
+j=0
+# k=0
+# bins=[]
+# bins_after=[]
+def d(x):
+    global j
+    global i
+    # global k
+    # global bins
+    # global bins_after
+    index=x.index
+    # bins.append(len(x))
+
+    if len(index)>remove:
+        # np.concatenate((clean,x.iloc[remove:].to_numpy()))
+        # np.concatenate((noise,x.iloc[:remove].to_numpy()))
         
-#         clean.extend(x.iloc[remove:].to_numpy())
-#         noise.extend(x.iloc[:remove].to_numpy())
+        clean.extend(x.iloc[remove:].to_numpy())
+        noise.extend(x.iloc[:remove].to_numpy())
         
-#         return pd.DataFrame(columns=x.columns)
-#     else:
+        return pd.DataFrame(columns=x.columns)
+    else:
         
-#         # np.concatenate((noise,x.to_numpy()))
-#         noise.extend(x.to_numpy())
-#         return pd.DataFrame(columns=x.columns)
-#         # clean.append(pd.DataFrame(columns=x.columns))
-#         # return pd.DataFrame(columns=x.columns)
+        # np.concatenate((noise,x.to_numpy()))
+        noise.extend(x.to_numpy())
+        return pd.DataFrame(columns=x.columns)
+        # clean.append(pd.DataFrame(columns=x.columns))
+        # return pd.DataFrame(columns=x.columns)
 
 
-# meta= {
-#     "Final_positionX": "int64",
-#     "Final_positionY": "float64",
-#     "Final_time": "float64"
+meta= {
+    "Final_positionX": "int64",
+    "Final_positionY": "float64",
+    "Final_time": "float64"
     
-# }
+}
 
 
-# print('before noise removal')
+print('before noise removal')
 
-# del_grouped=np.array(train_data.groupby(['xbins', 'ybins']).apply(d,meta=meta).compute())
+del_grouped=np.array(train_data.groupby(['xbins', 'ybins']).apply(d,meta=meta).compute())
 
-clean=np.load('/home/ubuntu/Abhikamya/noise_removal/noise_removal_2GANS/without_noise_100000.npy')
-noise=np.load('/home/ubuntu/Abhikamya/noise_removal/noise_removal_2GANS/noise_100000.npy')
+# clean=np.load('/home/ubuntu/Abhikamya/noise_removal/noise_removal_2GANS/without_noise_100000.npy')
+# noise=np.load('/home/ubuntu/Abhikamya/noise_removal/noise_removal_2GANS/noise_100000.npy')
 print(np.shape(clean))
 print(np.shape(noise))
 rng.shuffle(clean, axis=0)
 rng.shuffle(noise, axis=0)
-np.save('signal_0',clean)
-np.save('noise_0',noise)
+np.save('signal_1p5',clean)
+np.save('noise_1p5',noise)
 print(i,j,i+j)
 # print('total number of bins before',np.sum(bins))
 # print('total number of bins after',np.sum(bins_after))
@@ -239,10 +246,10 @@ def save_plot(X):
     hist=plt.hist2d(X[:,1],X[:,2],bins=100,cmap=cmap,vmin=0.1,range=[[-0.02,0.02],[0,5e+4]])
     cbar3 = plt.colorbar()
     cbar3.set_label('Counts in each pixel', labelpad=15, fontsize=11)
-    plt.suptitle('Signal for Initial Position X = 0')
+    plt.suptitle('Signal for Initial Position X = 1.5')
 
     # plt.subplots_adjust(left=0.15, bottom=0.15, right=0.82, top=0.85)
-    filename = 'signal_0.png'
+    filename = 'signal_1p5.png'
     plt.savefig(filename)
     plt.close()
 
@@ -277,10 +284,10 @@ def save_plot(X):
     hist=plt.hist2d(X[:,1],X[:,2],bins=100,cmap=cmap,vmin=0.1,range=[[-0.02,0.02],[0,5e+4]])
     cbar3 = plt.colorbar()
     cbar3.set_label('Counts in each pixel', labelpad=15, fontsize=11)
-    plt.suptitle('Noise for Initial Position X = 0')
+    plt.suptitle('Noise for Initial Position X = 1.5')
 
     # plt.subplots_adjust(left=0.15, bottom=0.15, right=0.82, top=0.85)
-    filename = 'noise_0.png'
+    filename = 'noise_1p5.png'
     plt.savefig(filename)
     plt.close()
 

@@ -94,10 +94,8 @@ qtt = QuantileTransformer(output_distribution='normal', n_quantiles=1000000,subs
 
 # LOADING TRAINING DATA
 def load_real_samples():
-    X=np.load('/home/ubuntu/Abhikamya/noise_removal/noise_removal_2GANS/conditional/noise_0.npy',allow_pickle=True)
-    X = np.delete(X, 2,1)
+    X=np.load('/home/ubuntu/Abhikamya/noise_removal/noise_removal_2GANS/conditional/signal_0.npy')
     rng.shuffle(X, axis=0)
-    X=X[:int(1.5e+7),:]
     maxx=np.max(X[:,0])
     maxy=np.max(X[:,1]) 
     minx=np.min(X[:,0])
@@ -722,7 +720,7 @@ epochs_n=[i+1 for i in range (len(D_lossl))]
 plt.plot(epochs_n,D_lossl,label="W distance")
 plt.plot(epochs_n,G_lossl,label="Generator loss")
 plt.plot(epochs_n,Gradient_penalty,label="Gradient penalty")
-plt.ylabel('epochs')
+plt.xlabel('epochs')
 plt.legend()
 plt.savefig('loss_functions_and_gp.png')
 plt.close("all")
@@ -731,20 +729,20 @@ plt.close("all")
 plt.plot(epochs_n,D_lossl,label="W distance")
 plt.plot(epochs_n,G_lossl,label="Generator loss")
 plt.legend()
-plt.ylabel('epochs')
+plt.xlabel('epochs')
 plt.savefig('loss_functions.png')
 plt.close("all")
 
 plt.plot(epochs_n,D_lossl,label="W distance")
 plt.plot(epochs_n,G_lossl,label="Generator loss")
-plt.ylabel('epochs')
+plt.xlabel('epochs')
 plt.legend()
 plt.savefig('loss_functions.png')
 plt.close("all")
 
 plt.plot(epochs_n,kll,label="KL_divergence")
 plt.yscale('log')
-plt.ylabel('epochs')
+plt.xlabel('epochs')
 plt.title('KL divergence')
 plt.savefig('kl_divergence.png')
 

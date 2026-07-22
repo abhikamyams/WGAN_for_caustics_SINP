@@ -68,10 +68,9 @@ mint=np.min(train_data['Final_time']).compute()
 maxe=np.max(train_data['Deposited_energy']).compute()
 mine=np.min(train_data['Deposited_energy']).compute()
 
-maxx,minx=maxx,minx
-maxy,miny=maxy,miny
-maxe,mine=maxe,mine
-maxt,mint=maxt,mint
+np.save('full_range',np.array([maxx,maxy,minx,miny,mint,maxt,mine,maxe]))
+
+
 
 
 #create edges for bins

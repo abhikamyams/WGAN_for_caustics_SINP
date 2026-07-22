@@ -10,7 +10,7 @@ Input Processing:
 
 Training: 
 
-We train two seperate WGAN models for the seperated sets. The underlying structure of these models are not different by any means. 
+We train two seperate WGAN models for the noise and signal sets. The underlying structures of these models are not different by any means. 
 code : WGAN_noise.py, WGAN_signal.py
 
 Algorithm used in the training is similar to,
@@ -19,6 +19,9 @@ Algorithm used in the training is similar to,
 
 with the hyper parameters changed according to the needs of our dataset. The training efficiency is improved from this by adding decaying gaussian noise to generated and real data. We have also implemented a warmup for the learning rates in both critic and generator. 
 
-The models can be run on GPU or CPU but GPU is preferred due to its higher efficiency. The batch size is limited by memory, you should not go higher than 128x128x4 in GPU and 128x128x32 in CPU ( assuming GPU ram of 16 GB and CPU ram of 100 GB). For the losses to be saved into memory, the code will need to finish running all given epochs. If you end up stopping the code in between these values are printed out on the terminal and can be recovered from there.
+The models can be run on GPU or CPU but GPU is preferred due to its higher efficiency. The batch size is limited by memory, so you should not go higher than 128x128x4 in GPU and 128x128x32 in CPU ( assuming GPU ram of 16 GB and CPU ram of 100 GB). For the losses to be saved into memory, the code will need to finish running all given epochs. If you end up stopping the code in between these values are printed out on the terminal and can be recovered from there. Retraining from a previous trained model is also possible here. The model will load whichever version was saved last and start training it till the given epoch. It should be noted that if you want to start training from scratch on an already trained model, you should delete the checkpoints file, because if it exists and has saved check points, the model will only start training from there. 
+
+Generation: 
+The number of particles to be generated is taken as an input from the terminal. The code generation.py will find the number of noise and signal phonons to be made using a given ratio. It generates both noise and signal, does the inverse transformation, combines them and cleans up 'leakage'. These processes are sped up by accessing the previously saved ranges and QTs instead of having to load the original dataset. For generation of 10^7 particles, this code takes up about 4 minutes. Due to memory constraints only this many can be produced at a time. 
 
 

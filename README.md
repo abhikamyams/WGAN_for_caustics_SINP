@@ -19,6 +19,6 @@ Algorithm used in the training is similar to,
 
 with the hyper parameters changed according to the needs of our dataset. The training efficiency is improved from this by adding decaying gaussian noise to generated and real data. We have also implemented a warmup for the learning rates in both critic and generator. 
 
-The models can be run on GPU or CPU but GPU is preferred due to its higher efficiency. The batch size is limited by memory, you should not go more that 128*128*4 in GPU and 128*128*32 in CPU ( assuming GPU ram of 16 GB and CPU ram of 100 GB). For the losses to be saved into memory, the code will need to finish running all given epochs. If you end up stopping the code in between these values are printed out on the terminal and can be recovered from there.
+The models can be run on GPU or CPU but GPU is preferred due to its higher efficiency. The batch size is limited by memory, you should not go higher than 128x128x4 in GPU and 128x128x32 in CPU ( assuming GPU ram of 16 GB and CPU ram of 100 GB). For the losses to be saved into memory, the code will need to finish running all given epochs. If you end up stopping the code in between these values are printed out on the terminal and can be recovered from there.
 
 

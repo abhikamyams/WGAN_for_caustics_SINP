@@ -1,8 +1,7 @@
 WGAN_for_caustics_SINP
 
-This repository contains the implementation of A WGAN GP model designed to reproduce phonon distributions from a G4CMP simulation of 0.1 eV energy deposition in Calcium Tungstate substrate. The input data is 2 Dimensional with shape (2.1 x 10^8, 4). The columns represent the 4 features X, Y, Energy and Time while the rows represent individual phonons. Codes used for this model along iwth their purposes are listed below. 
+This repository contains the implementation of A WGAN GP model designed to reproduce phonon distributions from a G4CMP simulation of 0.1 eV energy deposition in Calcium Tungstate substrate. The input data is 2 Dimensional with shape (2.1 x 10^8, 4). The columns represent the 4 features X, Y, Energy and Time while the rows represent individual phonons. Codes used for this model along with their purposes are listed below. 
 
-Input Processing: 
 
 
 1.seperation.py
@@ -14,7 +13,7 @@ Separation of signal and noise : The input is highly noisy in X-Y dimensions, wi
 
 Regularization and Quantile Transformation: Normalization to [0,1] for X and Y, Log transformation then normalization for E and T. This process is done to avoid any bias developed by the model to particular features. Although this code saves the transformed dataset, this is not really needed since the transformaton is part of the WGAN training code. The main purpose of this is to save the Quantile transform functions, so that these can be accessed later without loading the original data set and doing the heavy computation again. This helps significantly reduce time during generation. QTs and range lists for noise and sigal are saved seperately. 
 
-3.  WGAN_noise.py and  WGAN_signal.py
+3. WGAN_noise.py and  WGAN_signal.py
    
 We train two seperate WGAN models for the noise and signal sets. The underlying structures of these models are not different by any means. 
 
@@ -28,7 +27,7 @@ The models can be run on GPU or CPU but GPU is preferred due to its higher effic
 
 
 
-4.generation.py 
+4. generation.py 
 
 
 The number of particles to be generated is taken as an input from the terminal. The code will find the number of noise and signal phonons to be made using a given ratio. It generates both noise and signal, does the inverse transformation, combines them and cleans up 'leakage'. These processes are sped up by accessing the previously saved ranges and QTs instead of having to load the original dataset. For generation of 10^7 particles, this code takes up about 4 minutes. Due to memory constraints only this many can be produced at a time. 

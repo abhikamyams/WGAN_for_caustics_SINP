@@ -236,10 +236,7 @@ def save_plot2(X,name, model):
 
 
 
-
-
-
-
+#load dummy models so that the latest version can replace these. 
 
                                               #GENERATOR LAYERS : 8 Dense layers ,Neurons per layer : 100-->512-->512-->1024x3-->512-->4
 

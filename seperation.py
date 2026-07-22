@@ -1,9 +1,10 @@
+#To seperate signal from noise: 
 
 
-
-# This code only works when you want to remove noise from particles in order 10e+7, if you go upto 10e+8 it will hit a memory limit. You can fix this by having it write directly 
-# into zarr files instead of storing the numpy file in ram before saving. I tried this and there was an error where the expected number of particles were not found in 
-# the noise or signal file. Since we only need to work with 10e+7 particles anyways (partly for computational speed, partly for limiting memory usage), I didnt look into debugging that.
+# This code only works when you want to remove noise from particles less than 2 x 10^8, if you go upto 8 x 10e+8 it will hit a memory limit. This is because the noise and signal files are kept as
+# numpy files in the ram before saving. You can fix this by having the code write directly into zarr files instead of storing the numpy file in ram before saving. 
+# I tried this and there was an error where the expected number of particles were not found in the noise or signal file. Since we only need to work with 10e+7 particles anyways
+# (partly for computational speed, partly for limiting memory usage), I didnt look into debugging that.
 # Im sure with dask there will be more efficient ways to execute this. For the current data set,this code is sufficient.
 
 

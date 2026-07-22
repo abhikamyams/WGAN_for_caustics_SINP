@@ -1,5 +1,5 @@
 
-# SETTING CORE LIMITS FOR NUMPY AND PANDAS BEFORE IMPORTING THEM
+# SET CORE LIMITS FOR NUMPY AND PANDAS BEFORE IMPORTING THEM
 import os
 num_cores_str="20"
 os.environ["OMP_NUM_THREADS"] = num_cores_str
@@ -8,7 +8,7 @@ os.environ["MKL_NUM_THREADS"] = num_cores_str
 os.environ["VECLIB_MAXIMUM_THREADS"] =num_cores_str 
 os.environ["NUMEXPR_NUM_THREADS"] = num_cores_str
 
-# SETTING GPU/CPU AND CORE LIMIT FOR TENSORFLOW
+# SET GPU/CPU AND CORE LIMIT FOR TENSORFLOW
 import tensorflow as tf
 
 device='gpu'
@@ -26,42 +26,35 @@ else:
     tf.config.threading.set_inter_op_parallelism_threads(num_cores)
     tf.config.threading.set_intra_op_parallelism_threads(num_cores)
 
-# IMPORTING RELEVANT LIBRARIES
+# IMPORT RELEVANT LIBRARIES
 import time
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-
-
 from tensorflow.keras.layers import Layer, Conv2D, Conv2DTranspose, Activation, Reshape, LayerNormalization, BatchNormalization
 from tensorflow.keras.layers import Input, Dropout, Concatenate, Dense, LeakyReLU, Flatten
 from tensorflow.keras import Model
 from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.initializers import RandomNormal
-
 from tensorflow import convert_to_tensor
 tf.experimental.numpy.experimental_enable_numpy_behavior()
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 from sklearn.preprocessing import QuantileTransformer 
-
 from tensorflow.keras.layers import ReLU
 from tensorflow.keras.layers import LeakyReLU
 rng = np.random.default_rng()
 
-# SETTING COLOR SCALE : if a pixel doesnt have a hit it will be black, this way we can distinguish between low no of hits and zero hits
+# SET COLOR SCALE : if a pixel doesnt have a hit it will be black, this way we can distinguish between low no of hits and zero hits
 cmap = plt.cm.viridis.copy()
 cmap.set_under('black')  
 plt.figure(figsize=(6,6))
 
-# SETTING HYPERPARAMETERS
+# SET HYPERPARAMETERS
 MODEL_NAME = 'WCGAN'
 features=4
 sigma, decay = 1e-2, 0.9998 
 BATCH_SIZE = 128*128*4
-
 NOISE_DIM = 100
 LAMBDA = 1e-4
 EPOCHs = 60
@@ -87,19 +80,19 @@ qtt = QuantileTransformer(output_distribution='normal', n_quantiles=1000000,subs
 
 
 
-# LOADING TRAINING DATA
+# LOAD TRAINING DATA
 def load_real_samples():
     X=np.load('/home/ubuntu/Abhikamya/noise_removal/downconversion/noise_1.npy',allow_pickle=True)
 
-	#Shuffling the dataset 
+	#Shuffle the dataset 
     rng.shuffle(X, axis=0)
 
-	#Only taking 10% of the set for training due to time constraints
+	#Only take 10% of the set for training due to time constraints
     X=X[:15817004,:]
 
     X=X.astype(np.float32)
 
-	#Defining the max/mins of the dataset for regularization
+	#Define the max/mins of the dataset for regularization
     maxx=np.max(X[:,0])
     minx=np.min(X[:,0])
 
@@ -120,7 +113,7 @@ def load_real_samples():
     logmaxe=np.max(np.log(X[:,2]))
     return X,maxx,maxy,logmaxt,minx,miny,logmint,mint,maxt,mine,maxe,logmine,logmaxe
 
-#Loading the training set as a numpy array named train_data_bt of dimension ((1.5 x 10^ 7),4) 
+#Load the training set as a numpy array named train_data_bt of dimension ((1.5 x 10^ 7),4) 
 train_data_bt,maxx,maxy,logmaxt,minx,miny,logmint,mint,maxt,mine,maxe,logmine,logmaxe = load_real_samples()
 
 print('Total Number of Particles in dataset :',len(train_data_bt))
@@ -157,22 +150,23 @@ def transformation(Y):
     X[:,3]=qtt.fit_transform(X[:,3].reshape(-1,1)).reshape(np.shape(X)[0])
     X[:,2]=qte.fit_transform(X[:,2].reshape(-1,1)).reshape(np.shape(X)[0])
 
-	#Converting to a tensor because the network accepts tensors as inputs
+	#Convert to a tensor because the network accepts tensors as inputs
     X=convert_to_tensor(X)
     return X
 
 def inverse_transformation(Y):
     X=Y.copy()
+	
 
+	#Inverse Transformation
     X[:,0]=qtx.inverse_transform(X[:,0].reshape(-1,1)).reshape(X.shape[0])
     X[:,1]=qty.inverse_transform(X[:,1].reshape(-1,1)).reshape(X.shape[0])
     X[:,3]=qtt.inverse_transform(X[:,3].reshape(-1,1)).reshape(X.shape[0])
     X[:,2]=qte.inverse_transform(X[:,2].reshape(-1,1)).reshape(X.shape[0])
 
-
+	#Inverse Regularization
     X[:,3] = np.exp(X[:,3]*(logmaxt-logmint) + logmint)
     X[:,2] = np.exp(X[:,2]*(logmaxe-logmine) + logmine)
-
     X[:,0] = X[:,0]*(maxx-minx) + minx
     X[:,1] = X[:,1]*(maxy-miny) + miny
     return X
@@ -180,16 +174,16 @@ def inverse_transformation(Y):
 
 
 #sanity check to see if the inverse transformed data will be the same as the original dataset
-#loading the first 200 phonons
+#load the first 200 phonons
 sampleset_real=train_data_bt[0:200,:]
 
-#transforming the whole data set and saving it as train_data_at
+#transform the whole data set and saving it as train_data_at
 train_data_at=transformation(train_data_bt)
 
 #inverse transformation of the first 200 phonons of train_data_at
 sampleset_inversed=inverse_transformation(train_data_at.numpy()[0:200,:])
 
-#calculating the relative difference between the first 200 from FullSim vs the First 200 after transformation and inverse transformation
+#calculate the relative difference between the first 200 from FullSim vs the First 200 after transformation and inverse transformation
 diff=(sampleset_real-sampleset_inversed)/sampleset_real
 
 print("/difference between real and inversed",np.sum(diff**2))
@@ -252,14 +246,14 @@ def get_kld(real: np.ndarray,
     return kl
 
 
-# SLICING BASED ON BATCH SIZE and saving the result ast train_data_sliced
+# SLICE BASED ON BATCH SIZE and saving the result ast train_data_sliced
 train_data_sliced=tf.data.Dataset.from_tensor_slices(train_data_at).batch(BATCH_SIZE,drop_remainder=True)
 
 
-# SAVING A SAMPLE PLOT OF ONE BATCH
+# SAVE A SAMPLE PLOT OF ONE BATCH
 def save_plot2(X):
 
-	#loading back to numpy
+	#load back to numpy
     X=X.numpy()
 	
 	#inverse transformation
@@ -336,7 +330,7 @@ save_plot2(sample_image)
 
 
 
-# # In[7]:
+
                                               #GENERATOR LAYERS : 8 Dense layers ,Neurons per layer : 100-->512-->512-->1024x3-->512-->4
 
 

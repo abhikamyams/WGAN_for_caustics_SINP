@@ -4,14 +4,19 @@ This repository contains the implementation of A WGAN GP model designed to repro
 
 Input Processing: 
 
-1. Separation of signal and noise : The input is highly noisy in X-Y dimensions, with the signal like pattern being hard to notice in small batch sizes. So we split the data into two sets, signal  (5.1x10^7 phonons)  and noise (1.5x10^8 phonons). code : seperation.py --> This code also save the min/max ranges of the original dataset, so that these values can be accessed later without loading the training set. 
 
-2. Regularization and Quantile Transformation: Normalization to [0,1] for X and Y, Log transformation then normalization for E and T. This process is done to avoid any bias developed by the model to particular features. code : Input_processing.py --> Although this code saves the transformed dataset, this is not really needed since the transformaton is part of the WGAN training code. The main purpose of this is to save the Quantile transform functions, so that these can be accessed later without loading the original data set and doing the heavy computation again. This helps significantly reduce time during generation. QTs and range lists for noise and sigal are saved seperately. 
+1.seperation.py
 
-Training: 
+Separation of signal and noise : The input is highly noisy in X-Y dimensions, with the signal like pattern being hard to notice in small batch sizes. So we split the data into two sets, signal  (5.1x10^7 phonons)  and noise (1.5x10^8 phonons).This code also save the min/max ranges of the original dataset, so that these values can be accessed later without loading the training set. 
 
+
+2.Input_processing.py 
+
+Regularization and Quantile Transformation: Normalization to [0,1] for X and Y, Log transformation then normalization for E and T. This process is done to avoid any bias developed by the model to particular features. Although this code saves the transformed dataset, this is not really needed since the transformaton is part of the WGAN training code. The main purpose of this is to save the Quantile transform functions, so that these can be accessed later without loading the original data set and doing the heavy computation again. This helps significantly reduce time during generation. QTs and range lists for noise and sigal are saved seperately. 
+
+3.  WGAN_noise.py and  WGAN_signal.py
+   
 We train two seperate WGAN models for the noise and signal sets. The underlying structures of these models are not different by any means. 
-code : WGAN_noise.py, WGAN_signal.py
 
 Algorithm used in the training is similar to,
 
@@ -23,7 +28,10 @@ The models can be run on GPU or CPU but GPU is preferred due to its higher effic
 
 
 
-Generation: 
-The number of particles to be generated is taken as an input from the terminal. The code generation.py will find the number of noise and signal phonons to be made using a given ratio. It generates both noise and signal, does the inverse transformation, combines them and cleans up 'leakage'. These processes are sped up by accessing the previously saved ranges and QTs instead of having to load the original dataset. For generation of 10^7 particles, this code takes up about 4 minutes. Due to memory constraints only this many can be produced at a time. 
+4.generation.py 
+
+
+The number of particles to be generated is taken as an input from the terminal. The code will find the number of noise and signal phonons to be made using a given ratio. It generates both noise and signal, does the inverse transformation, combines them and cleans up 'leakage'. These processes are sped up by accessing the previously saved ranges and QTs instead of having to load the original dataset. For generation of 10^7 particles, this code takes up about 4 minutes. Due to memory constraints only this many can be produced at a time. 
+
 
 

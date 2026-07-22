@@ -12,8 +12,13 @@ Training:
 
 We train two seperate WGAN models for the seperated sets. The underlying structure of these models are not different by any means. 
 code : WGAN_noise.py, WGAN_signal.py
-The models can be run on GPU or CPU but GPU is preferred due to its higher efficiency. Few things to note while running the training codes are,
-i. The batch size is limited by memory, you should not go more that 128*128*4 in GPU and 128*128*32 in CPU ( assuming GPU ram of 16 GB and CPU ram of 100 GB)
-ii. For the loss functions to be saved into memory, the code will need to finish running all given epochs. If you end up stopping the code in between these values are printed out on the terminal and can be recovered from there. 
+
+Algorithm used in the training is similar to,
+
+<img width="1016" height="539" alt="image" src="https://github.com/user-attachments/assets/d4f9242d-cc88-4bee-9c9e-3070e511143b" />
+
+with the hyper parameters changed according to the needs of our dataset. The training efficiency is improved from this by adding decaying gaussian noise to generated and real data. We have also implemented a warmup for the learning rates in both critic and generator. 
+
+The models can be run on GPU or CPU but GPU is preferred due to its higher efficiency. The batch size is limited by memory, you should not go more that 128*128*4 in GPU and 128*128*32 in CPU ( assuming GPU ram of 16 GB and CPU ram of 100 GB). For the losses to be saved into memory, the code will need to finish running all given epochs. If you end up stopping the code in between these values are printed out on the terminal and can be recovered from there.
 
 

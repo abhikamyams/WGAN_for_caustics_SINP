@@ -35,7 +35,8 @@ import time
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from IPython.display import clear_output
+import pandas as pd
+import dask.dataframe as dd
 from tensorflow.keras.layers import Layer, Conv2D, Conv2DTranspose, Activation, Reshape, LayerNormalization, BatchNormalization
 from tensorflow.keras.layers import Input, Dropout, Concatenate, Dense, LeakyReLU, Flatten
 from tensorflow.keras import Model
@@ -379,7 +380,7 @@ for i in range(2):
     start_inside = time.time()
     fake=generator.predict(sample_noise)
     print ('Time taken for generating {} {} particles is {} minutes\n'.format(split[i], name,
-                                                      (time.time()-start_inside)/60)
+                                                      (time.time()-start_inside)/60))
 
     #inverse transform the generated data
     start_inside2 = time.time()
@@ -406,8 +407,61 @@ print ('Total Time taken for generating and Saving {} particles is {} minutes\n'
                                                       (time.time()-start)/60))
 
 #plot the new particles
-save_plot2(np.array(final),"Combined", model= 'FastSim')
+final=np.array(final)
+save_plot2(final,"Before_cleanup", model= 'FastSim')
 
 #save the final array
+
+
+
+#CLEANUP 
+start_cleanup= time.time()
+
+#load the valid 4dimensional bins that were saved during seperation. These contain the acceptable bins in which phonons can be expected in the dataset. 
+#Phonons that are not in any of these bins are purely due to 'leakage'
+bins = np.load('bins.npy',allow_pickle=True)
+
+
+#load the minmax ranges needed to apply these bins to the newly generated data
+[maxx,maxy,minx,miny,mint,maxt,mine,maxe]=list(np.load('/home/ubuntu/Abhikamya/Final/Input_Processing/full_range.npy',allow_pickle=True))
+
+#create sets of valid intervals from the bins
+bins = pd.DataFrame( data=bins, columns=['xbins', 'ybins', 'ebins','tbins'])
+valid_bins = pd.MultiIndex.from_frame(bins)
+
+#convert generated data into dask data frame.
+final=dd.from_array(final, columns=["Final_positionX", "Final_positionY", "Deposited_energy","Final_time"])
+
+#create bins from the loaded min/max ranges
+xbins=np.linspace(minx,maxx,101)
+ybins=np.linspace(miny,maxy,101)
+ebins=np.linspace(mine,maxe,101)
+tbins=np.linspace(mint,maxt,101)
+
+#bin the data in all 4 dimensions
+final['xbins']= final["Final_positionX"].map_partitions(pd.cut,xbins)
+final['ybins']= final["Final_positionY"].map_partitions(pd.cut,ybins)
+final['ebins']= final["Deposited_energy"].map_partitions(pd.cut,ebins)
+final['tbins']= final["Final_time"].map_partitions(pd.cut,tbins)
+
+
+#cleanup function
+def cleanup(df):
+    #create intervals from bins in the generated data. 
+    idx = pd.MultiIndex.from_frame(df[['xbins', 'ybins', 'ebins','tbins']])
+    #isin works like a mask and will only return phonons within valid_bins
+    return df[idx.isin(valid_bins)]
+
+#apply cleanup function to the dataset.
+final = np.array(final.map_partitions(cleanup, meta=final._meta).compute())
+
+print('Particles after cleanup',final.shape[0])
+
 np.save('FastSim_phonons_total',np.array(final))
+
+print ('Total Time taken for cleaning up {} particles is {} minutes\n'.format(final.shape[0],
+                                                      (time.time()-start_cleanup)/60))
+
+#plot the particles after cleanup
+save_plot2(final,'After_cleanup', model = "FastSim")
 

@@ -488,7 +488,7 @@ if ckpt_manager.latest_checkpoint:
     print ('Latest checkpoint of epoch {} restored!!'.format(CURRENT_EPOCH-1))
 
     
-# # In[15]:
+
 
 
 
@@ -572,11 +572,6 @@ def generate_and_save_images(model, epoch, test_input,real,save=True):
     return kl
 
 num_examples_to_generate = BATCH_SIZE
-
-# # We will reuse this seed overtime
-sample_noise = tf.random.normal([num_examples_to_generate, NOISE_DIM])
-kl_sample=generate_and_save_images(generator, CURRENT_EPOCH-1, sample_noise,train_data_bt[0:100000,:], save=True)
-print("kl_divergence_for_epoch0",kl_sample)
 
 
 #only generate one batch at a time for memory efficiency 

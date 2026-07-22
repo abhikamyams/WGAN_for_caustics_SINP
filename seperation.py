@@ -74,8 +74,11 @@ np.save('full_range',np.array([maxx,maxy,minx,miny,mint,maxt,mine,maxe]))
 
 
 #create edges for bins
-xbins=np.linspace(minx,maxx,nbins+1)
-ybins=np.linspace(miny,maxy,nbins+1)
+xbins=np.linspace(minx,maxx,101)
+ybins=np.linspace(miny,maxy,101)
+ebins=np.linspace(mine,maxe,101)
+tbins=np.linspace(mint,maxt,101)
+
 
 
 #Save plots of the original FullSim data
@@ -153,9 +156,20 @@ def save_plot():
 
 save_plot()
 
-#Bin the data according to xbins, ybins from before
+#Bin the data according to xbins, ybins, ebins and tbins from before
 train_data['xbins']= train_data["Final_positionX"].map_partitions(pd.cut,xbins)
-train_data['ybins']= train_data["Final_positionY"].map_partitions(pd.cut,xbins)
+train_data['ybins']= train_data["Final_positionY"].map_partitions(pd.cut,ybins)
+train_data['ebins']= train_data["Deposited_energy"].map_partitions(pd.cut,ebins)
+train_data['tbins']= train_data["Final_time"].map_partitions(pd.cut,tbins)
+
+#save all the valid 4dimensional bin combinations in which particles can be found in the training data
+bins = (
+    train_data[["xbins", "ybins","ebins","tbins"]]
+    .drop_duplicates()
+    .compute()
+)
+np.save('bins',bins)
+
 
 #define empty bins for signal/clean and noise
 clean = []

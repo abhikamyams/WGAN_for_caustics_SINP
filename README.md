@@ -12,4 +12,8 @@ Training:
 
 We train two seperate WGAN models for the seperated sets. The underlying structure of these models are not different by any means. 
 code : WGAN_noise.py, WGAN_signal.py
+The models can be run on GPU or CPU but GPU is preferred due to its higher efficiency. Few things to note while running the training codes are,
+i. The batch size is limited by memory, you should not go more that 128*128*4 in GPU and 128*128*32 in CPU ( assuming GPU ram of 16 GB and CPU ram of 100 GB)
+ii. For the loss functions to be saved into memory, the code will need to finish running all given epochs. If you end up stopping the code in between these values are printed out on the terminal and can be recovered from there. 
+
 

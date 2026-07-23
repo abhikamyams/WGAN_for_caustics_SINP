@@ -13,7 +13,7 @@ Separation of signal and noise : The input is highly noisy in X-Y dimensions, wi
 
 Regularization and Quantile Transformation: Normalization to [0,1] for X and Y, Log transformation then normalization for E and T, then Quantile transformation of all 4 features. Although this code saves the transformed dataset, this is not really needed since the transformaton is part of the WGAN training code. The main purpose of this is to save the Quantile transform functions, so that these can be accessed later without loading the original data set and doing the heavy computation again. This helps significantly reduce time during generation. QTs and range lists for noise and sigal are saved seperately. 
 
-3. WGAN_noise.py and  WGAN_signal.py
+3.WGAN_noise.py and  WGAN_signal.py
    
 We train two seperate but identical WGAN models for the noise and signal sets. 
 
@@ -26,8 +26,7 @@ with the hyper parameters changed according to the needs of our dataset. The tra
 The models can be run on GPU or CPU but GPU is preferred due to its higher efficiency. The batch size is limited by memory, so you should not go higher than 128x128x4 in GPU and 128x128x32 in CPU ( assuming GPU ram of 16 GB and CPU ram of 100 GB). For the losses to be saved into memory, the code will need to finish running all given epochs. If you end up stopping the code in between these values are printed out on the terminal and can be recovered from there. Retraining from a previous trained model is also possible here. The model will load whichever version was saved last and start training it till the given epoch. It should be noted that if you want to start training from scratch on an already trained model, you should delete the checkpoints file, because if it exists and has saved check points, the model will only start training from there. 
 
 
-
-4. generation.py 
+4.generation.py 
 
 
 The number of particles to be generated is taken as an input from the terminal. The code will find the number of noise and signal phonons to be made using a given ratio. It generates both noise and signal, does the inverse transformation, combines them and cleans up 'leakage'. These processes are sped up by accessing the previously saved ranges and QTs instead of having to load the original dataset. For generation of 10^7 particles, this code takes up about 4 minutes. Due to memory constraints only this many can be produced at a time. 

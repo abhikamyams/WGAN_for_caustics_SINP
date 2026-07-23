@@ -83,7 +83,7 @@ qtt = QuantileTransformer(output_distribution='normal', n_quantiles=1000000,subs
 
 # LOAD TRAINING DATA
 def load_real_samples():
-    X=np.load('/home/ubuntu/Abhikamya/noise_removal/downconversion/signal_1.npy',allow_pickle=True)
+    X=np.load('/home/ubuntu/Abhikamya/Final/Input_Processing/signal_1.npy',allow_pickle=True)
 	
     rng.shuffle(X, axis=0)
 	#Only take 50% of the set for training due to time constraints
@@ -796,4 +796,3 @@ plt.yscale('log')
 plt.xlabel('epochs')
 plt.title('KL divergence')
 plt.savefig('kl_divergence.png')
-

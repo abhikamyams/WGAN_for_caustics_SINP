@@ -22,6 +22,7 @@ if gpus:
     print('Running on GPU')
 else:
     print("No GPU found. Running on CPU.")
+    #set cpu core limit
     num_cores=20
     tf.config.threading.set_inter_op_parallelism_threads(num_cores)
     tf.config.threading.set_intra_op_parallelism_threads(num_cores)
@@ -82,7 +83,7 @@ qtt = QuantileTransformer(output_distribution='normal', n_quantiles=1000000,subs
 
 # LOAD TRAINING DATA
 def load_real_samples():
-    X=np.load('/home/ubuntu/Abhikamya/noise_removal/downconversion/noise_1.npy',allow_pickle=True)
+    X=np.load('/home/ubuntu/Abhikamya/Final/Input_Processing/noise_1.npy',allow_pickle=True)
 
 	#Shuffle the dataset 
     rng.shuffle(X, axis=0)
@@ -783,8 +784,3 @@ plt.yscale('log')
 plt.xlabel('epochs')
 plt.title('KL divergence')
 plt.savefig('kl_divergence.png')
-
-
-
-
-

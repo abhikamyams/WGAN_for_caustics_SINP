@@ -2,7 +2,7 @@ WGAN_for_caustics_SINP
 
 This repository contains the implementation of a WGAN GP model designed to reproduce the phonon distributions from a G4CMP simulation of 0.1 eV energy deposition in Calcium Tungstate substrate. The input data is 2 Dimensional with shape (2.1 x 10^8, 4). The columns represent the 4 features X, Y, Energy and Time while the rows represent individual phonons. Codes used for this model along with their purposes are listed below. 
 
-
+Environment activation: source ~/Abhikamya/WGAN7/ml_v2/bin/activate
 
 1.seperation.py
 

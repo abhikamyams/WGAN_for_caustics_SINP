@@ -1,14 +1,28 @@
 import matplotlib.pyplot as plt
 import dask.dataframe as dd
 import numpy as np
+from pathlib import Path
 
-#load FastSim and FullSim data
-FastSim=np.load('/home/ubuntu/Abhikamya/Final/FastSim_phonons_total.npy',allow_pickle=True)
+batches = int(float(input('Total Number of batches')))
+# Find and load all FastSim files
+FastSim=[]
+
+for i in range(2):
+    batch=np.load(f"FastSim_phonons_{i}.npy",allow_pickle=True)
+    batch = np.delete(batch, [4, 5, 6, 7], axis=1)
+    print(np.shape(batch))
+    FastSim.extend(list(batch))
+FastSim=np.array(FastSim).astype(np.float32)
+
+print(np.shape(FastSim))
+
+
 FullSim=dd.read_parquet('/home/ubuntu/Abhikamya/Original_root_files/Output1.parquet', 
 columns=["Final_positionX", "Final_positionY","Deposited_energy", "Final_time"])
 
 #take the same number of phonons from both data sets
-FullSim=np.array(FullSim.head(FastSim.shape[0],npartitions=2))
+#increase number of partitions if there is an error saying" Insufficient elements for `head`. X elements requested, only Y(<X) elements available.""
+FullSim=np.array(FullSim.head(FastSim.shape[0],npartitions=10))
 
 #plot FullSim 1D histograms
 plt.figure(figsize=(12,12))

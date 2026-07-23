@@ -23,7 +23,16 @@ features=2
 batch_size=10000
 
 #load FastSim data
-FastSim=np.load("FastSim_phonons_total.npy")
+batches = int(float(input('Total Number of batches')))
+# Find and load all FastSim files
+FastSim=[]
+
+for i in range(2):
+    batch=np.load(f"FastSim_phonons_{i}.npy",allow_pickle=True)
+    batch = np.delete(batch, [4, 5, 6, 7], axis=1)
+    print(np.shape(batch))
+    FastSim.extend(list(batch))
+FastSim=np.array(FastSim).astype(np.float32)
 
 #load FullSim data
 FullSim=dd.read_parquet('/home/ubuntu/Abhikamya/Original_root_files/Output1.parquet', 
